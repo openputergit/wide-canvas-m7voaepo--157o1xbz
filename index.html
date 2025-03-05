@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<style>
+    body { font-family: 'Poppins', sans-serif; }
+    .modal { display: none; }
+    .modal.active { display: block; }
+</style>
+<body class="bg-gray-100">
+    <!-- Login/Signup Modal -->
+    <div id="authModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg w-96">
+            <div class="flex justify-between mb-6">
+                <h2 id="modalTitle" class="text-2xl font-bold">Login</h2>
+                <button onclick="toggleModal('authModal')" class="text-gray-500"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <form id="authForm" class="space-y-4">
+                <div id="nameField" class="hidden">
+                    <input type="text" placeholder="Full Name" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <input type="email" placeholder="Email" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <input type="password" placeholder="Password" class="w-full p-2 border rounded">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Submit</button>
+                <p class="text-center">
+                    <a href="#" onclick="toggleAuthMode()" id="authToggleText" class="text-blue-600">Create an account</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-xl font-bold">RestaurantMS</div>
+                <div class="flex space-x-4">
+                    <button onclick="toggleModal('authModal')" class="text-gray-600 hover:text-gray-900">Login</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Menu Management -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Add Food Item -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-4">Add Food Item</h3>
+                <form id="addFoodForm" class="space-y-4">
+                    <input type="text" placeholder="Food Name" class="w-full p-2 border rounded">
+                    <input type="number" placeholder="Price" class="w-full p-2 border rounded">
+                    <input type="text" placeholder="Category" class="w-full p-2 border rounded">
+                    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                        Add Item
+                    </button>
+                </form>
+            </div>
+
+            <!-- Food Menu -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-4">Food Menu</h3>
+                <div id="foodMenu" class="space-y-2">
+                    <!-- Menu items will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Table Booking -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-4">Book a Table</h3>
+                <form id="bookingForm" class="space-y-4">
+                    <input type="date" class="w-full p-2 border rounded">
+                    <input type="time" class="w-full p-2 border rounded">
+                    <select class="w-full p-2 border rounded">
+                        <option>2 People</option>
+                        <option>4 People</option>
+                        <option>6 People</option>
+                    </select>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                        Book Table
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Billing Section -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4">Billing</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-medium mb-2">Current Order</h4>
+                    <div id="orderItems" class="space-y-2">
+                        <!-- Order items will be added here -->
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-2">Total</h4>
+                    <p id="totalAmount" class="text-2xl font-bold">$0.00</p>
+                    <button onclick="generateBill()" class="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                        Generate Bill
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
+            <form id="contactForm" class="space-y-4">
+                <input type="text" placeholder="Name" class="w-full p-2 border rounded">
+                <input type="email" placeholder="Email" class="w-full p-2 border rounded">
+                <textarea placeholder="Message" class="w-full p-2 border rounded h-32"></textarea>
+                <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                    Send Message
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample menu items
+        const menuItems = [
+            { id: 1, name: 'Burger', price: 9.99, category: 'Main Course' },
+            { id: 2, name: 'Pizza', price: 12.99, category: 'Main Course' },
+            { id: 3, name: 'Salad', price: 7.99, category: 'Starters' }
+        ];
+
+        let currentOrder = [];
+
+        // Auth Modal Toggle
+        function toggleModal(modalId) {
+            document.getElementById(modalId).classList.toggle('active');
+        }
+
+        function toggleAuthMode() {
+            const nameField = document.getElementById('nameField');
+            const modalTitle = document.getElementById('modalTitle');
+            const authToggleText = document.getElementById('authToggleText');
+            
+            if (nameField.classList.contains('hidden')) {
+                nameField.classList.remove('hidden');
+                modalTitle.textContent = 'Sign Up';
+                authToggleText.textContent = 'Already have an account?';
+            } else {
+                nameField.classList.add('hidden');
+                modalTitle.textContent = 'Login';
+                authToggleText.textContent = 'Create an account';
+            }
+        }
+
+        // Initialize food menu
+        function initializeFoodMenu() {
+            const menuContainer = document.getElementById('foodMenu');
+            menuContainer.innerHTML = menuItems.map(item => `
+                <div class="flex justify-between items-center border-b py-2">
+                    <div>
+                        <p class="font-medium">${item.name}</p>
+                        <p class="text-sm text-gray-500">${item.category}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span>$${item.price}</span>
+                        <button onclick="addToOrder(${item.id})" class="bg-green-500 text-white p-1 rounded">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                        <button onclick="removeFromMenu(${item.id})" class="bg-red-500 text-white p-1 rounded">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Add item to order
+        function addToOrder(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (item) {
+                currentOrder.push(item);
+                updateOrderDisplay();
+            }
+        }
+
+        // Update order display
+        function updateOrderDisplay() {
+            const orderContainer = document.getElementById('orderItems');
+            const totalElement = document.getElementById('totalAmount');
+            
+            orderContainer.innerHTML = currentOrder.map(item => `
+                <div class="flex justify-between items-center">
+                    <span>${item.name}</span>
+                    <span>$${item.price}</span>
+                </div>
+            `).join('');
+
+            const total = currentOrder.reduce((sum, item) => sum + item.price, 0);
+            totalElement.textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Remove item from menu
+        function removeFromMenu(itemId) {
+            const index = menuItems.findIndex(i => i.id === itemId);
+            if (index > -1) {
+                menuItems.splice(index, 1);
+                initializeFoodMenu();
+            }
+        }
+
+        // Generate bill
+        function generateBill() {
+            alert(`Bill generated for $${currentOrder.reduce((sum, item) => sum + item.price, 0).toFixed(2)}`);
+            currentOrder = [];
+            updateOrderDisplay();
+        }
+
+        // Form submissions
+        document.getElementById('addFoodForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Food item added successfully!');
+        });
+
+        document.getElementById('bookingForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Table booked successfully!');
+        });
+
+        document.getElementById('contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Message sent successfully!');
+        });
+
+        document.getElementById('authForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Authentication successful!');
+            toggleModal('authModal');
+        });
+
+        // Initialize the menu on page load
+        initializeFoodMenu();
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
